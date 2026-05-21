@@ -48,7 +48,7 @@
 #define  G4_oct   { 0.0, G4, Ab4, A4, Bb4, B4, C5, Db5, D5, Eb5, E5, F5, Fs5 } 
 #define Ab4_oct   { 0.0, Ab4, A4, Bb4, B4, C5, Db5, D5, Eb5, E5, F5, Fs5, G5 } 
 #define  A4_oct   { 0.0, A4, Bb4, B4, C5, Db5, D5, Eb5, E5, F5, Fs5, G5, Ab5 }
-#define scale_maj { 1, 3, 5, 6, 8, 10, 12 }
+#define SCALE_MAJ { 1, 3, 5, 6, 8, 10, 12 }
 
 #define chord_I   { 1, 5, 8 }  //1-3-5
 #define chord_ii  { 3, 6, 10 } //2-4-6
@@ -57,6 +57,4 @@
 #define chord_IV  { 1, 6, 10 } //4-6-8
 #define chord_v   { 3, 8, 11 } //5-7b-9
 #define chord_V   { 3, 8, 12 } //5-7-9
-#define chord_VI  { 1, 5, 10 } //6-8-10
-#define chord_VII { 3, 6, 12 } //7-9-11
-
+#define chord_vi  { 1, 5, 10 } //6-8-10

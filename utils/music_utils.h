@@ -28,13 +28,13 @@ typedef struct chord {
 } chord;
 
 typedef struct aleaNote {
-  float* freq; // frequency of note in hz. dynamically-allocated for multiple notes
+  float freq[3]; // frequency of note in hz. dynamically-allocated for multiple notes
   float len; // length of note--1.0 is a whole note, 0.125 an eight note
   u8 count;  // length of *freq buffer
 } aleaNote;
 
 typedef struct aleaMeasure {
-  aleaNote* m_notes;
+  aleaNote m_notes[8];
   chord m_chord;
 } aleaMeasure;
 
@@ -52,13 +52,19 @@ typedef struct aleaSong {
   PhraseID structure[PHRASE_COUNT];
 } aleaSong;
 
-bool setSongKey(aleaSong* song);
-bool setSongTempo(aleaSong* song);
-bool createSongPattern(aleaSong* song);
-bool initSongPhrases(aleaSong* song);
+int setSongKey(aleaSong* song);
+int setSongTempo(aleaSong* song);
+int createSongPattern(aleaSong* song);
+int initSongPhrases(aleaSong* song);
 
-bool initPhraseMeasures(aleaPhrase* phrase);
+int initPhraseMeasures(aleaPhrase* phrase);
 
-bool populateMeasure(aleaMeasure* measure);
+int populateMeasure(aleaMeasure* measure);
 
-bool chordFromProgression(chord* cchord, float (*octave)[13], int m_chord[3]);
+int chordFromProgression(chord* cchord, float (*octave)[13], int m_chord[3]);
+
+char fmtPhraseID(PhraseID ptype);
+void printNote(aleaNote* note);
+void printMeasure(aleaMeasure* measure);
+void printPhrase(aleaPhrase* phrase);
+void printSong(aleaSong* song);

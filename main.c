@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sndfile.h>
 #include <math.h>
 #include "utils/music_utils.h"
+#include "utils/wav_utils.h"
 #include "portaudio.h"
 
 #define SAMPLE_RATE       48000
@@ -18,31 +21,64 @@
   .channels   = CHANNEL_COUNT,\
   .format     = SF_FORMAT_WAV | SF_FORMAT_PCM_16 }
 
-int main()
+int main(int argc, char *argv[])
 {
   aleaSong song;
-  if (!setSongKey(&song)) { 
-    fprintf(stderr, "Couldn't set song key\n");
-    return 1;
-  }
-  if (!setSongTempo(&song)) {
-    fprintf(stderr, "Couldn't set song key\n");
-    return 1;
-  }
-  if (!createSongPattern(&song)) {
-    fprintf(stderr, "Couldn't create song pattern\n");
-    return 1;
+  wavContainer wav;
+  u8 FLAGS = 0;
+  char filename[32];
+
+  for (int i=1; i<argc; i++) {
+    const char *arg = argv[i];
+    if (strcmp(arg, "--help") == 0) {
+      printf("HELP REQUESTED\n");
+    } else if (strcmp(arg, "--bass") == 0) {
+      printf("BASS selected\n");
+      FLAGS |= FLAG_BASS;
+    } else if (strcmp(arg, "--harmony") == 0) {
+      printf("HARMONY selected\n");
+      FLAGS |= FLAG_HARMONY;
+    } else if (strcmp(arg, "--rhythm") == 0) {
+      printf("RHYTHM selected\n");
+      FLAGS |= FLAG_RHYTHM;
+    } else if (strcmp(arg, "--drums") == 0) {
+      printf("DRUMS selected\n");
+      FLAGS |= FLAG_DRUMS;
+    } else if (strcmp(arg, "--midi") == 0) {
+      printf("MIDI selected\n");
+      FLAGS |= FLAG_MIDI;
+    } else if (strcmp(arg, "--output") == 0) {
+      if ((i+1) == argc) {
+        fprintf(stderr, "must supply filename to write to for output\n");
+        return 0;
+      }
+      strncpy(filename, argv[i+1], sizeof(filename));
+      printf("OUTPUT selected: %s\n", filename);
+      FLAGS |= FLAG_OUTPUT;
+    }
   }
 
-  printf("INITIALIZING SONG PHRASES\n");
+  setSongKey(&song);
+  setSongTempo(&song);
+  createSongPattern(&song);
+
   if (!initSongPhrases(&song)) {
     fprintf(stderr, "Couldn't initialize song phrases\n");
     return 1;
-  } else {
-    printf("Song phrases initialized\n");
+  }
+  printf("Song phrases initialized\n");
+
+  initWavContainer(&wav, &song);
+  write_song(&wav);
+
+  if ((FLAGS & FLAG_OUTPUT) == (FLAG_OUTPUT)) {
+    printf("Writing output to %s\n", filename);
+    write_song_to_file(&wav, filename);
   }
 
-  printSong(&song);
+  wav_playback(&wav);
+
+  printf("Exiting!\n");
 
   return 0;
 }

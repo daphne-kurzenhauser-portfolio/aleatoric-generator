@@ -41,22 +41,20 @@ const float key_octaves[13][13] = {
   A4_oct
 };
 
-int setSongKey(aleaSong* song)
+void setSongKey(aleaSong* song)
 {
   srand(time(NULL));
   int _keyID = rand() % 13;
   memcpy(song->octave, key_octaves[_keyID], sizeof(key_octaves[_keyID]));
-  return 1;
 }
 
-int setSongTempo(aleaSong* song)
+void setSongTempo(aleaSong* song)
 {
   srand(time(NULL));
-  song->tempo_bpm = (rand() % MIN_TEMPO) + (MAX_TEMPO - MIN_TEMPO);
-  return 1;
+  song->tempo_bpm = (float)((rand() % MIN_TEMPO) + (MAX_TEMPO - MIN_TEMPO));
 }
 
-int createSongPattern(aleaSong* song)
+void createSongPattern(aleaSong* song)
 {
   int _phraseID = rand() % 3;
   int prog_A = rand() % PROGRESSION_COUNT;
@@ -80,14 +78,12 @@ int createSongPattern(aleaSong* song)
   memcpy(song->phrase_dict[1], progressions[prog_B], sizeof(progressions[prog_B]));
   memcpy(song->phrase_dict[2], progressions[prog_C], sizeof(progressions[prog_C]));
   memcpy(song->phrase_dict[3], progressions[prog_D], sizeof(progressions[prog_D]));
-
-  return 1;
 }
 
 int initSongPhrases(aleaSong* song)
 {
-  for (int i=0; i<PHRASE_COUNT; i++) {
-    PhraseID _phraseID = song->structure[i];
+  for (int i=0; i<4; i++) {
+    PhraseID _phraseID = i;
     aleaPhrase* phrase = &(song->m_phrases[i]);
     phrase->octave = &(song->octave);
     memcpy(phrase->m_progression, song->phrase_dict[_phraseID], 
@@ -181,10 +177,8 @@ char fmtPhraseID(PhraseID ptype) {
 
 void printNote(aleaNote* note)
 {
-  printf("\t\t\tPRINTING NOTE\n");
   for (int i=0; i<note->count; i++) {
-    printf("\t\t\t\tNOTE %d: %.4f Hz\n", i, note->freq[i]);
-    printf("\t\t\t\tNOTE %d: %.4f note length\n", i, note->len);
+    printf("\t\t\t\tNOTE %d: %.4f Hz, length = %.4f\n", i, note->freq[i], note->len);
   }
 }
 
@@ -192,12 +186,6 @@ void printMeasure(aleaMeasure* measure)
 {
   chord* chd = &(measure->m_chord);
   printf("\t\tPRINTING MEASURE\n");
-  for (int i=0; i<chd->num_chord_notes; i++) {
-    printf("\t\t\tCHORD NOTE %d: %.4f Hz\n", i, chd->chord_notes[i]);
-  }
-  for (int i=0; i<chd->num_nonchord_notes; i++) {
-    printf("\t\t\tNONCHORD NOTE %d: %.4f Hz\n", i, chd->nonchord_notes[i]);
-  }
   for (int i=0; i<8; i++) {
     printNote(&(measure->m_notes[i]));
   }
@@ -224,12 +212,12 @@ void printSong(aleaSong* song)
       song->octave[1],song->octave[2],song->octave[3],song->octave[4],
       song->octave[5],song->octave[6],song->octave[7],song->octave[8],
       song->octave[9],song->octave[10],song->octave[11],song->octave[12]);
-  printf("\tTEMPO: %d bpm\n", song->tempo_bpm);
+  printf("\tTEMPO: %.1f bpm\n", song->tempo_bpm);
   printf("\tSTRUCTURE: %c-%c-%c-%c-%c-%c\n", 
       fmtPhraseID(song->structure[0]), fmtPhraseID(song->structure[1]),
       fmtPhraseID(song->structure[2]), fmtPhraseID(song->structure[3]),
       fmtPhraseID(song->structure[4]), fmtPhraseID(song->structure[5]));
   for (int i=0; i<PHRASE_COUNT; i++) {
-    printPhrase(&(song->m_phrases[i]));
+    printPhrase(&(song->m_phrases[song->structure[i]]));
   }
 }

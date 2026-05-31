@@ -1,3 +1,6 @@
+#ifndef MUSIC_H
+#define MUSIC_H
+
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
@@ -9,8 +12,16 @@
 #define PROGRESSION_COUNT   10
 #define MEASURE_COUNT       4
 
+#define FLAG_BASS     0x01
+#define FLAG_HARMONY  0x02
+#define FLAG_RHYTHM   0x04
+#define FLAG_DRUMS    0x08
+#define FLAG_MIDI     0x10
+#define FLAG_OUTPUT   0x20
+
 typedef uint8_t u8;
 typedef int16_t s16;
+typedef uint32_t u32;
 
 typedef enum {
   PhraseA = 0,
@@ -45,16 +56,16 @@ typedef struct aleaPhrase {
 } aleaPhrase;
 
 typedef struct aleaSong {
-  aleaPhrase m_phrases[PHRASE_COUNT];
+  aleaPhrase m_phrases[4];
   int phrase_dict[4][PROGRESSION_LENGTH][3];
   float octave[13];
-  int tempo_bpm;
+  float tempo_bpm;
   PhraseID structure[PHRASE_COUNT];
 } aleaSong;
 
-int setSongKey(aleaSong* song);
-int setSongTempo(aleaSong* song);
-int createSongPattern(aleaSong* song);
+void setSongKey(aleaSong* song);
+void setSongTempo(aleaSong* song);
+void createSongPattern(aleaSong* song);
 int initSongPhrases(aleaSong* song);
 
 int initPhraseMeasures(aleaPhrase* phrase);
@@ -68,3 +79,5 @@ void printNote(aleaNote* note);
 void printMeasure(aleaMeasure* measure);
 void printPhrase(aleaPhrase* phrase);
 void printSong(aleaSong* song);
+
+#endif

@@ -8,19 +8,6 @@
 #include "utils/wav_utils.h"
 #include "portaudio.h"
 
-#define SAMPLE_RATE       48000
-#define NUM_SECONDS       1
-#define FREQUENCY_HZ      440
-#define QUARTER_AMPLITUDE 8192
-#define HALF_AMPLITUDE    16384
-#define CHANNEL_COUNT     1
-
-// macroing the default SF_INFO struct--48KHz sample rate, mono, 16-bit signed WAV
-#define DEFAULT_SND_INFO  {\
-  .samplerate = SAMPLE_RATE,\
-  .channels   = CHANNEL_COUNT,\
-  .format     = SF_FORMAT_WAV | SF_FORMAT_PCM_16 }
-
 int main(int argc, char *argv[])
 {
   aleaSong song;
@@ -69,7 +56,10 @@ int main(int argc, char *argv[])
   }
   printf("Song phrases initialized\n");
 
+  //printSong(&song);
+
   initWavContainer(&wav, &song);
+  wav.flags = FLAGS;
   write_song(&wav);
 
   if ((FLAGS & FLAG_OUTPUT) == (FLAG_OUTPUT)) {

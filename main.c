@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  song.flags = FLAGS;
   setSongKey(&song);
   setSongTempo(&song);
   createSongPattern(&song);

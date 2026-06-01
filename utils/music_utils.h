@@ -61,6 +61,7 @@ typedef struct aleaSong {
   float octave[13];
   float tempo_bpm;
   PhraseID structure[PHRASE_COUNT];
+  u8 flags;
 } aleaSong;
 
 void setSongKey(aleaSong* song);

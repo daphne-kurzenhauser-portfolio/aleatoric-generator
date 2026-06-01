@@ -37,6 +37,7 @@ u32 write_note(wavContainer* wav, aleaNote* note)
 {
   float freq_0 = 0.0f; 
   float freq_1 = 0.0f;
+  double base_amplitude = QUARTER_AMPLITUDE;
   double amplitude_f_0 = 0.0f;
   double amplitude_f_1 = 0.0f;
   double amplitude_factor;
@@ -48,16 +49,17 @@ u32 write_note(wavContainer* wav, aleaNote* note)
 
   freq_0 = 1 / (note->freq[0]);
   if (note->count > 1) {
+    base_amplitude = EIGHTH_AMPLITUDE;
     freq_1 = 1 / (note->freq[1]);
   }
 
   for (int i=0; i<note_buf; i++) {
     if (i < num_attack_buf) {
-      amplitude_factor = (QUARTER_AMPLITUDE * i)/num_attack_buf;
+      amplitude_factor = (base_amplitude * i) / num_attack_buf;
     } else if ((note_buf - i) < num_release_buf) {
-      amplitude_factor = (QUARTER_AMPLITUDE*(note_buf-i))/num_release_buf;
+      amplitude_factor = (base_amplitude * (note_buf-i)) / num_release_buf;
     } else {
-      amplitude_factor = QUARTER_AMPLITUDE;
+      amplitude_factor = base_amplitude;
     }
     t = (double)wav->iter / SAMPLE_RATE;
     amplitude_f_0 = 2 * (t/freq_0 - floor(1/2 + t/freq_0));

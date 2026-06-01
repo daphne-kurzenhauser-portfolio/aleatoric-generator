@@ -6,10 +6,11 @@
 #include "music_utils.h"
 
 #define SAMPLE_RATE 48000
+#define EIGHTH_AMPLITUDE 4096.0f
 #define QUARTER_AMPLITUDE 8192.0f
 #define HALF_AMPLITUDE 16384.0f
-#define ATTACK_ENVELOPE_MS  50.0f
-#define RELEASE_ENVELOPE_MS 50.0f
+#define ATTACK_ENVELOPE_MS  25.0f
+#define RELEASE_ENVELOPE_MS 25.0f
 
 typedef struct wavContainer {
   aleaSong* song;

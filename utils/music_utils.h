@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
+#include "music_tbls.h"
 
 #define MIN_TEMPO           80
 #define MAX_TEMPO           160
@@ -11,6 +12,10 @@
 #define PROGRESSION_LENGTH  4
 #define PROGRESSION_COUNT   10
 #define MEASURE_COUNT       4
+
+#define MIN_STARTING_KEY_MIDI   57  // NOTE_A3
+// MAX_STARTING_KEY_MIDI cannot be higher than 108 (C8) or will overflow octave
+#define MAX_STARTING_KEY_MIDI   69  // NOTE_A4
 
 #define FLAG_BASS     0x01
 #define FLAG_HARMONY  0x02
@@ -32,10 +37,11 @@ typedef enum {
 
 /// SONG COMPONENTS
 typedef struct chord {
-  float chord_notes[7];
-  float nonchord_notes[7];
+  Note chord_notes[7];
+  Note nonchord_notes[7];
   int num_chord_notes;
   int num_nonchord_notes;
+  Note key_root;
 } chord;
 
 typedef struct aleaNote {
@@ -46,19 +52,21 @@ typedef struct aleaNote {
 
 typedef struct aleaMeasure {
   aleaNote m_notes[8];
+  aleaNote bassline[1];
   chord m_chord;
 } aleaMeasure;
 
 typedef struct aleaPhrase {
   aleaMeasure m_measures[MEASURE_COUNT];
   int m_progression[PROGRESSION_LENGTH][3];
-  float (*octave)[13];
+  Note key_note;
+  u8 flags;
 } aleaPhrase;
 
 typedef struct aleaSong {
   aleaPhrase m_phrases[4];
   int phrase_dict[4][PROGRESSION_LENGTH][3];
-  float octave[13];
+  Note key_note;
   float tempo_bpm;
   PhraseID structure[PHRASE_COUNT];
   u8 flags;
@@ -71,9 +79,9 @@ int initSongPhrases(aleaSong* song);
 
 int initPhraseMeasures(aleaPhrase* phrase);
 
-int populateMeasure(aleaMeasure* measure);
+void populateMeasure(aleaMeasure* measure, u8 flags);
 
-int chordFromProgression(chord* cchord, float (*octave)[13], int m_chord[3]);
+int chordFromProgression(chord* cchord, int m_chord[3]);
 
 char fmtPhraseID(PhraseID ptype);
 void printNote(aleaNote* note);

@@ -6,8 +6,10 @@
 #include "music_utils.h"
 
 #define SAMPLE_RATE 48000
-#define QUARTER_AMPLITUDE 8192
-#define HALF_AMPLITUDE 16384
+#define QUARTER_AMPLITUDE 8192.0f
+#define HALF_AMPLITUDE 16384.0f
+#define ATTACK_ENVELOPE_MS  50.0f
+#define RELEASE_ENVELOPE_MS 50.0f
 
 typedef struct wavContainer {
   aleaSong* song;
@@ -17,12 +19,13 @@ typedef struct wavContainer {
   u32 iter;
   SF_INFO snd_info;
   SNDFILE* snd_file;
+  u8 flags;
 } wavContainer;
 
 void initWavContainer(wavContainer* wav, aleaSong* song);
 
 // write single note to wav data
-void write_note(wavContainer* wav, aleaNote* note);
+u32 write_note(wavContainer* wav, aleaNote* note);
 
 void write_song(wavContainer* wav);
 

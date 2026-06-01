@@ -33,17 +33,41 @@ void initWavContainer(wavContainer* wav, aleaSong* song)
 }
 
 // write single note to wav data
-void write_note(wavContainer* wav, aleaNote* note)
+u32 write_note(wavContainer* wav, aleaNote* note)
 {
-  u32 note_buf = wav->buf_whole_note * note->len;
-  double amplitude_f = 0;
+  float freq_0 = 0.0f; 
+  float freq_1 = 0.0f;
+  double amplitude_f_0 = 0.0f;
+  double amplitude_f_1 = 0.0f;
+  double amplitude_factor;
   double t = 0;
-  float freq = 1 / (note->freq[0]);
-  for (int i=0; i<note_buf; i++) {
-    t = (double)i / SAMPLE_RATE;
-    amplitude_f = 2 * (t/freq - floor(1/2 + t/freq));
-    wav->wav_data[wav->iter++] = amplitude_f * QUARTER_AMPLITUDE;
+  u32 note_buf = wav->buf_whole_note * note->len;
+  u32 iter_old = wav->iter;
+  u32 num_attack_buf = ATTACK_ENVELOPE_MS * SAMPLE_RATE / 1000;
+  u32 num_release_buf = RELEASE_ENVELOPE_MS * SAMPLE_RATE / 1000;
+
+  freq_0 = 1 / (note->freq[0]);
+  if (note->count > 1) {
+    freq_1 = 1 / (note->freq[1]);
   }
+
+  for (int i=0; i<note_buf; i++) {
+    if (i < num_attack_buf) {
+      amplitude_factor = (QUARTER_AMPLITUDE * i)/num_attack_buf;
+    } else if ((note_buf - i) < num_release_buf) {
+      amplitude_factor = (QUARTER_AMPLITUDE*(note_buf-i))/num_release_buf;
+    } else {
+      amplitude_factor = QUARTER_AMPLITUDE;
+    }
+    t = (double)wav->iter / SAMPLE_RATE;
+    amplitude_f_0 = 2 * (t/freq_0 - floor(1/2 + t/freq_0));
+    if (freq_1 != 0.0f) {
+      amplitude_f_1 = 2 * (t/freq_1 - floor(1/2 + t/freq_1));
+    }
+    wav->wav_data[wav->iter++] += amplitude_factor * (amplitude_f_0 + amplitude_f_1);
+  }
+
+  return (wav->iter - iter_old);
 }
 
 void write_song(wavContainer* wav)
@@ -54,6 +78,12 @@ void write_song(wavContainer* wav)
     aleaPhrase* _phrase = &(_song->m_phrases[_song->structure[phrase_idx]]);
     for (int meas_idx=0; meas_idx<MEASURE_COUNT; meas_idx++) {
       aleaMeasure* _measure = &(_phrase->m_measures[meas_idx]);
+      if ((wav->flags & FLAG_BASS) == FLAG_BASS) {
+        aleaNote* _bassnote = &(_measure->bassline[0]);
+        printf("Writing bass line\n");
+        u32 _it = write_note(wav, _bassnote);
+        wav->iter -= _it;
+      }
       for (int note_idx=0; note_idx<8; note_idx++) {
         aleaNote* _note = &(_measure->m_notes[note_idx]);
         write_note(wav, _note);      

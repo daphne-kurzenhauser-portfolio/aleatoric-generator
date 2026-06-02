@@ -49,6 +49,13 @@ bonus features:
 
 ## Notes
 
+All the notes in the program's output are generated with sawtooth waves, which can
+produce very poor sound quality if their amplitude is too high. The program tries
+to lower the default amplitude when harmony or bass are added, but be aware that
+VLC or other media players may automatically raise the volume when opening a `.wav`
+output from the application, resulting in poor audio degradation and really "crunchy"
+layering of sounds.
+
 ### Implementation Details
 
 To allow for portability and extension, much of the music data is defined in LUTs

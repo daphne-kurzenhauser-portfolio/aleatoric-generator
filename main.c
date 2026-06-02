@@ -1,12 +1,18 @@
-#include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sndfile.h>
-#include <math.h>
 #include "utils/music_utils.h"
 #include "utils/wav_utils.h"
 #include "portaudio.h"
+
+static void usage(void)
+{
+  fprintf(stderr, "usage: ./aleatoric [options]\n");
+  fprintf(stderr, "  options: \n");
+  fprintf(stderr, "    --help                 : prints this message\n");
+  fprintf(stderr, "    --bass                 : adds a bass line to the track\n");
+  fprintf(stderr, "    --harmony              : enables harmonization for melody notes\n");
+  fprintf(stderr, "    --output FILENAME.wav  : saves the track to FILENAME.wav\n");
+}
 
 int main(int argc, char *argv[])
 {
@@ -18,7 +24,8 @@ int main(int argc, char *argv[])
   for (int i=1; i<argc; i++) {
     const char *arg = argv[i];
     if (strcmp(arg, "--help") == 0) {
-      printf("HELP REQUESTED\n");
+      usage();
+      exit(0);
     } else if (strcmp(arg, "--bass") == 0) {
       printf("BASS selected\n");
       FLAGS |= FLAG_BASS;
@@ -50,10 +57,7 @@ int main(int argc, char *argv[])
   setSongTempo(&song);
   createSongPattern(&song);
 
-  if (!initSongPhrases(&song)) {
-    fprintf(stderr, "Couldn't initialize song phrases\n");
-    return 1;
-  }
+  initSongPhrases(&song);
   printf("Song phrases initialized\n");
 
   //printSong(&song);

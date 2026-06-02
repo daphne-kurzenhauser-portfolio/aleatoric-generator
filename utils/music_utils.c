@@ -4,8 +4,10 @@
 #include "music_tbls.h"
 #include "music_utils.h"
 
+/// mapping of note enums -> frequencies
+/// the twelve leading 1.0s are for the UNUSED_MIDI values
 const float hz_lut[NUM_NOTES] = {  
-0.0,  0.0,   0.0,  0.0,   0.0,  0.0,  0.0,   0.0,  0.0,   0.0,  0.0,   0.0,
+1.0,  1.0,   1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0,   1.0,  1.0,   1.0,
 C0_Hz,Cs0_Hz,D0_Hz,Ds0_Hz,E0_Hz,F0_Hz,Fs0_Hz,G0_Hz,Gs0_Hz,A0_Hz,As0_Hz,B0_Hz,
 C1_Hz,Cs1_Hz,D1_Hz,Ds1_Hz,E1_Hz,F1_Hz,Fs1_Hz,G1_Hz,Gs1_Hz,A1_Hz,As1_Hz,B1_Hz,
 C2_Hz,Cs2_Hz,D2_Hz,Ds2_Hz,E2_Hz,F2_Hz,Fs2_Hz,G2_Hz,Gs2_Hz,A2_Hz,As2_Hz,B2_Hz,
@@ -61,6 +63,7 @@ void createSongPattern(aleaSong* song)
 
   memcpy(song->structure, songStructures[_phraseID], sizeof(songStructures[_phraseID]));
 
+  /// we want distinct progressions for each phrase type
   while (prog_A == prog_B) { 
     prog_B = rand() % PROGRESSION_COUNT;
   }
@@ -77,7 +80,7 @@ void createSongPattern(aleaSong* song)
   memcpy(song->phrase_dict[3], progressions[prog_D], sizeof(progressions[prog_D]));
 }
 
-int initSongPhrases(aleaSong* song)
+void initSongPhrases(aleaSong* song)
 {
   for (int i=0; i<4; i++) {
     PhraseID _phraseID = i;
@@ -88,21 +91,16 @@ int initSongPhrases(aleaSong* song)
     phrase->flags = song->flags;
     initPhraseMeasures(phrase);
   }
-  return 1;
 }
 
-int initPhraseMeasures(aleaPhrase* phrase)
+void initPhraseMeasures(aleaPhrase* phrase)
 {
   for (int i=0; i<MEASURE_COUNT; i++) {
     aleaMeasure* measure = &(phrase->m_measures[i]);
     measure->m_chord.key_root = phrase->key_note;
-    if (!chordFromProgression(&(measure->m_chord), phrase->m_progression[i])) {
-      fprintf(stderr, "Couldn't initialize measures\n");
-      return 0;
-    }
+    chordFromProgression(&(measure->m_chord), phrase->m_progression[i]);
     populateMeasure(measure, phrase->flags);
   }
-  return 1;
 }
 
 void populateMeasure(aleaMeasure* measure, u8 flags)
@@ -112,14 +110,14 @@ void populateMeasure(aleaMeasure* measure, u8 flags)
   for (int i=0; i<8; i++) {
     aleaNote* nt = &(measure->m_notes[i]);
     Note melody_note;
-    nt->len = 0.125;
+    nt->len = 0.125; /// every note is an eighth note
     nt->count = 1;
     irand = rand() % 10;
-    if (irand < 8) {
+    if (irand < 8) { /// 80% chance we pick a note in the chord
       irand = rand() % chd->num_chord_notes;
       melody_note = chd->chord_notes[irand];
       nt->freq[0] = hz_lut[melody_note];
-    } else {
+    } else { /// 20% chance we pick a miscellaneous non-chord key in the major scale
       irand = rand() % chd->num_nonchord_notes;
       melody_note = chd->nonchord_notes[irand];
       nt->freq[0] = hz_lut[melody_note];
@@ -128,6 +126,7 @@ void populateMeasure(aleaMeasure* measure, u8 flags)
       int found = 0;
       Note harmony_note;
       nt->count++;
+      /// search for the next lowest chord note to harmonize with
       for (int j=(chd->num_chord_notes-1); j>=0; j--) {
         if (chd->chord_notes[j] < melody_note) {
           harmony_note = chd->chord_notes[j];
@@ -137,7 +136,6 @@ void populateMeasure(aleaMeasure* measure, u8 flags)
         }
       }
       if (found == 1) { continue; }
-
       /// if there wasn't a harmony note lower than the melody note, then we need
       /// to loop back around to the highest chord note and drop an octave down
       harmony_note = chd->chord_notes[chd->num_chord_notes-1] - 12;
@@ -145,7 +143,8 @@ void populateMeasure(aleaMeasure* measure, u8 flags)
     }
   }
   if ((flags & FLAG_BASS) == (FLAG_BASS)) {
-    aleaNote* bass_nt = &(measure->bassline[0]);
+    /// our bass line is a single whole note that is two octaves below the chord root
+    aleaNote* bass_nt = &(measure->bassline);
     Note bass_note = chd->chord_notes[0] - 24;
     bass_nt->freq[0] = hz_lut[bass_note];
     bass_nt->len = 1.0;
@@ -154,12 +153,15 @@ void populateMeasure(aleaMeasure* measure, u8 flags)
   return;
 }
 
-int chordFromProgression(chord* cchord, int m_chord[3])
+/// m_chord[3] is a triplet of key indices that correspond to a chord
+/// e.g. the I chord is {1, 5, 8} = 1-3-5
+/// these are defined and explained more in music_tbls.h
+void chordFromProgression(chord* cchord, int m_chord[3])
 {
   int found = 0;
   cchord->num_chord_notes = 0;
   cchord->num_nonchord_notes = 0;
-  for (int i=1; i<13; i++) {
+  for (int i=1; i<13; i++) { // loop over the 12-key octave of our song key
     found = 0;
     for (int j=0; j<3; j++) {
       if (i == m_chord[j]) {
@@ -169,9 +171,9 @@ int chordFromProgression(chord* cchord, int m_chord[3])
         break;
       }
     }
-
     if (found == 1) { continue; }
-
+    /// we don't want the non-chord notes to include notes outside of our major key,
+    /// so we just loop over the list of major scale indices
     for (int j=0; j<7; j++) {
       if (i == MAJOR_SCALE_INDICES[j]) {
         cchord->nonchord_notes[cchord->num_nonchord_notes] = cchord->key_root+(i-1);
@@ -180,7 +182,6 @@ int chordFromProgression(chord* cchord, int m_chord[3])
       }
     }
   }
-  return 1;
 }
 
 char fmtPhraseID(PhraseID ptype) {
@@ -201,7 +202,7 @@ char fmtPhraseID(PhraseID ptype) {
 void printNote(aleaNote* note)
 {
   for (int i=0; i<note->count; i++) {
-    printf("\t\t\t\tNOTE %d: %.4f Hz, length = %.4f\n", i, note->freq[i], note->len);
+    printf("\t\t\tNOTE %d: %.4f Hz, length = %.4f\n", i, note->freq[i], note->len);
   }
 }
 

@@ -1,17 +1,6 @@
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include "portaudio.h"
 #include "wav_utils.h"
-
-/*typedef struct wavContainer {
-  aleaSong* song;
-  s16* wav_data;
-  u32 buf_count;
-  u32 buf_whole_note;
-  u32 iter;
-  SF_INFO snd_info;
-  SNDFILE* snd_file;
-  } wavContainer;*/
 
 void initWavContainer(wavContainer* wav, aleaSong* song)
 {
@@ -24,7 +13,7 @@ void initWavContainer(wavContainer* wav, aleaSong* song)
 
   beat_count = 16 * PHRASE_COUNT;
   song_length_s = beat_count / (song->tempo_bpm / 60);
-  song_length_s = ceil(song_length_s);
+  song_length_s = ceil(song_length_s); // Round up to the next sec to have some spare buffers
   wav->buf_count = SAMPLE_RATE * song_length_s;
   wav->wav_data = malloc(wav->buf_count * sizeof(s16));
   wav->buf_whole_note = SAMPLE_RATE * (4 / (song->tempo_bpm / 60));
@@ -32,7 +21,8 @@ void initWavContainer(wavContainer* wav, aleaSong* song)
   wav->iter = 0;
 }
 
-// write single note to wav data
+/// Write a single aleaNote object to the WAV data
+/// Returns the amount of samples that were written
 u32 write_note(wavContainer* wav, aleaNote* note)
 {
   float freq_0 = 0.0f; 
@@ -49,7 +39,9 @@ u32 write_note(wavContainer* wav, aleaNote* note)
 
   freq_0 = 1 / (note->freq[0]);
   if (note->count > 1) {
-    base_amplitude = EIGHTH_AMPLITUDE;
+    // if there's too many notes, high amplitude sounds terrible, so we halve the
+    // amplitude to reduce the gain
+    base_amplitude = EIGHTH_AMPLITUDE; 
     freq_1 = 1 / (note->freq[1]);
   }
 
@@ -77,14 +69,15 @@ void write_song(wavContainer* wav)
   wav->iter = 0;
   aleaSong* _song = wav->song;
   for (int phrase_idx=0; phrase_idx<PHRASE_COUNT; phrase_idx++) {
+    ///
     aleaPhrase* _phrase = &(_song->m_phrases[_song->structure[phrase_idx]]);
     for (int meas_idx=0; meas_idx<MEASURE_COUNT; meas_idx++) {
+      ///
       aleaMeasure* _measure = &(_phrase->m_measures[meas_idx]);
       if ((wav->flags & FLAG_BASS) == FLAG_BASS) {
-        aleaNote* _bassnote = &(_measure->bassline[0]);
-        printf("Writing bass line\n");
+        aleaNote* _bassnote = &(_measure->bassline);
         u32 _it = write_note(wav, _bassnote);
-        wav->iter -= _it;
+        wav->iter -= _it; /// "Rewinding" the iterator back to the start of the measure
       }
       for (int note_idx=0; note_idx<8; note_idx++) {
         aleaNote* _note = &(_measure->m_notes[note_idx]);
@@ -94,12 +87,11 @@ void write_song(wavContainer* wav)
   }
 }
 
-int write_song_to_file(wavContainer* wav, const char *filename)
+void write_song_to_file(wavContainer* wav, const char *filename)
 {
   SNDFILE* wav_file = sf_open(filename, SFM_WRITE, &wav->snd_info);
   sf_writef_short(wav_file, wav->wav_data, wav->buf_count);
   sf_close(wav_file);
-  return 1;
 }
 
 int wav_playback(wavContainer* wav)
@@ -132,12 +124,13 @@ int wav_playback(wavContainer* wav)
   printf("Starting stream\n");
   fflush(stdout);
 
-  // just write the whole buffer, it's only one second long
+  // The whole buffer will be really large, so we write one second at a time
   u32 play_iter = 0;
   while (play_iter < (wav->buf_count - SAMPLE_RATE)) {
     Pa_WriteStream(stream, &wav->wav_data[play_iter], SAMPLE_RATE);
     play_iter += SAMPLE_RATE;
   }
+  // flush the remaining buffers
   Pa_WriteStream(stream, &wav->wav_data[play_iter], (wav->buf_count % SAMPLE_RATE));
 
   err = Pa_StopStream(stream);

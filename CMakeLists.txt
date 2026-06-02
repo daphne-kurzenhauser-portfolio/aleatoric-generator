@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(aleatoric)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH)
 
 find_package(SndFile REQUIRED)
 find_package(portaudio REQUIRED)
@@ -19,6 +19,5 @@ set(ALEA_HEADERS
 
 add_library(Alea_lib STATIC ${ALEA_HEADERS} ${ALEA_SRC})
 
-add_executable(aleatoric main.c ${ALEA_HEADERS})
-target_link_libraries(aleatoric PRIVATE Alea_lib SndFile::sndfile portaudio)
-install(TARGETS aleatoric)
+add_executable(${PROJECT_NAME} main.c ${ALEA_HEADERS})
+target_link_libraries(${PROJECT_NAME} PRIVATE Alea_lib SndFile::sndfile portaudio)

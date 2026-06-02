@@ -156,6 +156,9 @@
 #define  B8_Hz    7902.133
 #define  C9_Hz    8372.018
 
+/// indices of scale notes in each chord---note that these aren't offsets,
+/// so to get chord notes from a key root we have to subtract 1 from each index
+/// all the chord notes have been modulo 12'd to keep us in the same octave
 #define chord_I   { 1, 5, 8 }  //1-3-5
 #define chord_ii  { 3, 6, 10 } //2-4-6
 #define chord_iii { 5, 8, 12 } //3-5-7
